@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CHHS Mustang Bowling</title>
+<style>
+:root{
+  --red:#c8102e;--dark:#f1f3f6;--bg:transparent;--white:rgba(255,255,255,.07);
+  --gbg:rgba(5,150,105,.25);--gtxt:#6ee7b7;--rbg:rgba(220,38,38,.22);--rtxt:#fca5a5;
+  --bdr:rgba(255,255,255,.12);--muted:rgba(255,255,255,.45);--shad:0 2px 10px rgba(0,0,0,.35);--rad:8px
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Segoe UI',system-ui,sans-serif;color:var(--dark);font-size:14px;
+  min-height:100vh;
+  background:
+    radial-gradient(ellipse 90% 55% at 50% 108%, rgba(100,5,10,.95) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 40% at 70% -10%, rgba(70,0,8,.7) 0%, transparent 50%),
+    linear-gradient(170deg, #140606 0%, #0e0909 35%, #0a0505 65%, #0d0a07 100%);
+  background-attachment:fixed;
+}
+body::before{content:'';position:fixed;inset:0;
+  background:repeating-linear-gradient(-45deg,transparent,transparent 18px,rgba(255,255,255,.013) 18px,rgba(255,255,255,.013) 19px);
+  pointer-events:none;z-index:0}
+header,main{position:relative;z-index:1}
+
+/* HEADER */
+header{background:rgba(10,4,4,.75);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:#fff;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,.5);border-bottom:1px solid rgba(200,16,46,.25)}
+.hdr{max-width:1300px;margin:0 auto;padding:14px 20px 0}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;padding-bottom:11px}
+.logo{font-size:19px;font-weight:800;letter-spacing:-.3px}
+.logo em{color:var(--red);font-style:normal}
+.szn{font-size:11.5px;color:rgba(255,255,255,.45);margin-top:2px}
+nav{display:flex;overflow-x:auto}
+.tab{background:none;border:none;color:rgba(255,255,255,.55);padding:9px 15px;cursor:pointer;font:600 13px/1 'Segoe UI',system-ui,sans-serif;border-bottom:2.5px solid transparent;transition:.15s;white-space:nowrap;flex-shrink:0}
+.tab:hover{color:#fff;background:rgba(255,255,255,.06)}
+.tab.active{color:#fff;border-bottom-color:var(--red)}
+
+/* MAIN */
+main{max-width:1300px;margin:0 auto;padding:22px 20px}
+.view{display:none}.view.active{display:block}
+
+/* TILES */
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px;margin-bottom:22px}
+.tile{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:var(--rad);padding:14px 16px;box-shadow:var(--shad);text-align:center}
+.tile .lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;margin-bottom:6px}
+.tile .val{font-size:26px;font-weight:800;line-height:1;color:#fff}
+.tile .sub{font-size:11px;color:var(--muted);margin-top:5px}
+.tile.ac .val{color:#f87171}
+
+/* CARDS */
+.card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:var(--rad);padding:18px 20px;box-shadow:var(--shad);margin-bottom:18px}
+.ctitle{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:12px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:780px){.two{grid-template-columns:1fr}}
+
+/* SCORE TABLE */
+.sc{width:100%;border-collapse:collapse;font-size:13px}
+.sc th{background:rgba(0,0,0,.35);color:rgba(255,255,255,.8);padding:6px 10px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.sc th:first-child{text-align:left;min-width:110px}
+.sc td{padding:6px 10px;text-align:center;border-bottom:1px solid rgba(255,255,255,.07);color:#e5e7eb}
+.sc td:first-child{text-align:left;font-style:italic}
+.sc tr:nth-child(even) td{background:rgba(255,255,255,.03)}
+.sc tr.tot td{font-weight:800;background:rgba(0,0,0,.2)!important;font-style:italic;color:#fff}
+.sc tr.avg-up td.ac2{background:var(--gbg)!important;color:var(--gtxt);font-weight:700}
+.sc tr.avg-dn td.ac2{background:var(--rbg)!important;color:var(--rtxt);font-weight:700}
+.sh{font-size:14px;font-weight:700;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid var(--red);color:#fff}
+
+/* ENTRY TABLE */
+.et{width:100%;border-collapse:collapse;font-size:13px}
+.et th{background:rgba(0,0,0,.3);padding:7px 8px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;color:rgba(255,255,255,.55)}
+.et th:first-child{text-align:left}
+.et td{padding:5px 6px;border-bottom:1px solid rgba(255,255,255,.07);text-align:center;color:#e5e7eb}
+.et td:first-child{text-align:left}
+.et input[type=number]{width:68px;padding:5px 6px;border:1px solid rgba(255,255,255,.18);border-radius:4px;font:13px 'Segoe UI',system-ui,sans-serif;text-align:center;color:#fff;background:rgba(255,255,255,.1)}
+.et input[type=text]{width:155px;padding:5px 7px;border:1px solid rgba(255,255,255,.18);border-radius:4px;font:13px 'Segoe UI',system-ui,sans-serif;background:rgba(255,255,255,.1);color:#fff}
+.et input::placeholder{color:rgba(255,255,255,.35)}
+.et input:focus{outline:none;border-color:var(--red);background:rgba(255,255,255,.14)}
+.et .tc{font-weight:700;color:rgba(255,255,255,.55)}
+.et tfoot td{background:rgba(0,0,0,.25);font-weight:700;padding:6px 6px;color:#fff}
+
+/* FORM */
+.fcard{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:var(--rad);padding:18px 20px;box-shadow:var(--shad);margin-bottom:14px}
+.fcard h3{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--red);border-bottom:2px solid var(--red);padding-bottom:7px;margin-bottom:14px}
+.frow{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+.fg input,.fg select{padding:7px 10px;border:1px solid rgba(255,255,255,.18);border-radius:5px;font:14px 'Segoe UI',system-ui,sans-serif;color:#fff;background:rgba(255,255,255,.1)}
+.fg input::placeholder{color:rgba(255,255,255,.35)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--red);background:rgba(255,255,255,.14)}
+
+/* BUTTONS */
+.btn{padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font:600 13px 'Segoe UI',system-ui,sans-serif;transition:.15s;display:inline-flex;align-items:center;gap:5px}
+.btn-r{background:var(--red);color:#fff}.btn-r:hover{background:#a50d24}
+.btn-g{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#e5e7eb}.btn-g:hover{background:rgba(255,255,255,.14)}
+.btn-x{background:#dc3545;color:#fff}.btn-x:hover{background:#b02a37}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-green{background:#059669;color:#fff}.btn-green:hover{background:#047857}
+
+/* MATCH LIST */
+.mi{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:var(--rad);padding:13px 17px;margin-bottom:9px;box-shadow:var(--shad);cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:.15s;gap:12px}
+.mi:hover{background:rgba(255,255,255,.11);box-shadow:0 3px 14px rgba(0,0,0,.35)}
+.mi .mn{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase}
+.mi .op{font-size:15px;font-weight:700;margin:2px 0;color:#fff}
+.mi .dt{font-size:11px;color:var(--muted)}
+.mir{display:flex;align-items:center;gap:7px;flex-wrap:wrap;flex-shrink:0}
+.rb{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
+.rw{background:var(--gbg);color:var(--gtxt)}
+.rl{background:var(--rbg);color:var(--rtxt)}
+.rt{background:#fdf6e3;color:#7d5c0a}
+
+/* STATS TABLE */
+.st{width:100%;border-collapse:collapse;font-size:13px}
+.st th{background:rgba(0,0,0,.3);padding:9px 12px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.55);cursor:pointer;user-select:none}
+.st th:hover{background:rgba(0,0,0,.4)}
+.st th.srt{color:var(--red)}
+.st th:not(:first-child):not(:nth-child(2)){text-align:center}
+.st td{padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.07);color:#e5e7eb}
+.st td:not(:first-child):not(:nth-child(2)){text-align:center}
+.st tr:hover td{background:rgba(255,255,255,.04)}
+.avg-b{font-size:16px;font-weight:800;color:#fff}
+.rank-num{color:var(--muted);font-size:12px;font-weight:600}
+
+/* ROSTER */
+.rtags{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.rtag{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:4px 11px;font-size:12.5px;color:#e5e7eb}
+.rdel{background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;padding:0;line-height:1}
+.rdel:hover{color:var(--red)}
+
+/* MODAL */
+.mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
+.mbg.on{display:flex}
+.modal{background:#1a0a0a;border:1px solid rgba(255,255,255,.12);border-radius:10px;width:100%;max-width:1040px;padding:22px;margin:auto;color:#e5e7eb}
+.mhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.12)}
+.mhdr h3{font-size:16px;font-weight:800;color:#fff}
+.mclose{background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);line-height:1}
+.mclose:hover{color:#fff}
+
+/* SUB TABS */
+.stabs{display:flex;border-bottom:2px solid rgba(255,255,255,.12);margin-bottom:14px}
+.stab{background:none;border:none;padding:8px 18px;cursor:pointer;font:600 13px 'Segoe UI',system-ui,sans-serif;color:var(--muted);border-bottom:2.5px solid transparent;margin-bottom:-2px}
+.stab:hover{color:#fff}
+.stab.active{color:var(--red);border-bottom-color:var(--red)}
+
+/* MISC */
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.ph h2{font-size:19px;font-weight:800;color:#fff}
+.empty{text-align:center;padding:50px 20px;color:var(--muted)}
+.empty .ei{font-size:44px;margin-bottom:12px}
+.empty h3{font-size:17px;font-weight:700;color:rgba(255,255,255,.7);margin-bottom:6px}
+hr.dv{border:none;border-top:1px solid rgba(255,255,255,.1);margin:16px 0}
+.flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+#toast{position:fixed;bottom:20px;right:20px;background:rgba(30,10,10,.95);border:1px solid rgba(200,16,46,.4);color:#fff;padding:10px 18px;border-radius:7px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.5)}
+#toast.on{opacity:1}
+.note{font-size:12.5px;color:rgba(255,255,255,.6);background:rgba(255,255,255,.06);border-radius:6px;padding:10px 14px;border-left:3px solid rgba(255,255,255,.2)}
+/* Modal form inputs */
+.modal .fg input,.modal .fg select{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18);color:#fff}
+.modal .fg input::placeholder{color:rgba(255,255,255,.35)}
+.modal .fg input:focus,.modal .fg select:focus{background:rgba(255,255,255,.12);border-color:var(--red)}
+.modal .fg select option{background:#1a0a0a;color:#fff}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr">
+    <div class="hdr-top">
+      <div style="display:flex;align-items:center;gap:11px">
+        <img src="https://assets.scorebooklive.com/r/192x/uploads/production/school/18085/image/Center_Hill__MA__Mustangs_logo.webp"
+          style="height:42px;width:auto;object-fit:contain;filter:drop-shadow(0 0 6px rgba(200,16,46,.5))"
+          onerror="this.style.display='none'">
+        <div>
+          <div class="logo"><em>Center Hill</em> Bowling</div>
+          <div class="szn" id="sznInfo"></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span id="syncBadge" style="font-size:11px;display:none"></span>
+        <button class="btn btn-g btn-sm" style="color:#ccc;border-color:rgba(255,255,255,.2)" onclick="openSettings()">⚙ Settings</button>
+      </div>
+    </div>
+    <nav>
+      <button class="tab active" data-v="v-dash" onclick="go(this)">📊 Dashboard</button>
+      <button class="tab" data-v="v-enter" onclick="go(this)">➕ Enter Match</button>
+      <button class="tab" data-v="v-cards" onclick="go(this)">📋 Scorecards</button>
+      <button class="tab" data-v="v-stats" onclick="go(this)">🎳 Bowler Stats</button>
+      <button class="tab" data-v="v-roster" onclick="go(this)">👥 Roster</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div id="v-dash" class="view active"></div>
+  <div id="v-enter" class="view"></div>
+  <div id="v-cards" class="view"></div>
+  <div id="v-stats" class="view"></div>
+  <div id="v-roster" class="view"></div>
+</main>
+
+<!-- Scorecard Modal -->
+<div class="mbg" id="scMod">
+  <div class="modal">
+    <div class="mhdr">
+      <h3 id="scModTitle">Scorecard</h3>
+      <button class="mclose" onclick="closeMod('scMod')">×</button>
+    </div>
+    <div id="scModBody"></div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="mbg" id="stMod">
+  <div class="modal" style="max-width:450px">
+    <div class="mhdr">
+      <h3>Settings</h3>
+      <button class="mclose" onclick="closeMod('stMod')">×</button>
+    </div>
+    <div>
+      <div class="frow">
+        <div class="fg" style="flex:1"><label>Team Name</label><input id="st-name" type="text" style="width:100%"></div>
+      </div>
+      <div class="frow">
+        <div class="fg" style="flex:1"><label>Season</label><input id="st-szn" type="text" placeholder="2026-27" style="width:100%"></div>
+      </div>
+      <hr class="dv">
+      <div class="fg" style="margin-bottom:8px">
+        <label>Google Sheets Web App URL</label>
+        <input id="st-sheeturl" type="url" placeholder="https://script.google.com/macros/s/…/exec" style="width:100%;font-size:11.5px">
+        <span style="font-size:11px;color:var(--muted);display:block;margin-top:3px">Paste your deployed Apps Script URL to sync data with Google Sheets. Leave blank to use local storage only.</span>
+      </div>
+      <div class="flex" style="margin-bottom:12px">
+        <button class="btn btn-g btn-sm" onclick="testSheetConn()">🔗 Test Connection</button>
+        <span id="sheetTestMsg" style="font-size:12px;color:var(--muted);margin-left:4px"></span>
+      </div>
+      <hr class="dv">
+      <div class="flex" style="margin-bottom:10px">
+        <button class="btn btn-r" onclick="saveSettings()">Save Settings</button>
+        <button class="btn btn-g" onclick="closeMod('stMod')">Cancel</button>
+      </div>
+      <div class="flex">
+        <button class="btn btn-green btn-sm" onclick="exportData()">⬇ Export Data</button>
+        <button class="btn btn-g btn-sm" onclick="importData()">⬆ Import Data</button>
+        <button class="btn btn-x btn-sm" style="margin-left:auto" onclick="resetAll()">⚠ Reset All</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════
+const SK = 'chhs_bowling_v1';
+const SKURL = 'chhs_bowling_sheeturl_v1';
+function dfl() {
+  return { teamName:'Center Hill Mustangs', season:'2026-27', roster:{boys:[],girls:[]}, matches:[] };
+}
+let D = (() => { try { return JSON.parse(localStorage.getItem(SK)) || dfl(); } catch(e) { return dfl(); } })();
+let SHEET_URL = localStorage.getItem(SKURL) || '';
+
+const save = () => {
+  localStorage.setItem(SK, JSON.stringify(D));
+  if(SHEET_URL) sheetSave(D);
+};
+
+// ═══════════════════════════════════════════════════════
+// GOOGLE SHEETS SYNC
+// ═══════════════════════════════════════════════════════
+function setSyncStatus(state) {
+  const el=document.getElementById('syncBadge');
+  if(!el) return;
+  if(!SHEET_URL){el.style.display='none';return;}
+  el.style.display='inline-flex';
+  const map={syncing:['⟳ Loading…','rgba(255,255,255,.5)'],saving:['⟳ Saving…','rgba(255,255,255,.5)'],ok:['✓ Synced','#6ee7b7'],err:['⚠ Sync error','#fca5a5']};
+  const [txt,col]=map[state]||['',''];
+  el.textContent=txt; el.style.color=col;
+}
+
+async function sheetLoad() {
+  if(!SHEET_URL) return;
+  setSyncStatus('syncing');
+  try {
+    const r=await fetch(SHEET_URL+'?t='+Date.now());
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const remote=await r.json();
+    if(remote&&Array.isArray(remote.matches)){
+      D=remote;
+      localStorage.setItem(SK,JSON.stringify(D));
+      setSyncStatus('ok');
+      document.getElementById('sznInfo').textContent=`Season ${D.season}`;
+      render(cv);
+    } else { throw new Error('unexpected response'); }
+  } catch(e) {
+    setSyncStatus('err');
+    console.warn('Sheets load failed:',e);
+  }
+}
+
+async function sheetSave(data) {
+  if(!SHEET_URL) return;
+  setSyncStatus('saving');
+  try {
+    // mode:no-cors avoids CORS preflight — response is opaque but write still executes
+    await fetch(SHEET_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(data)});
+    setTimeout(()=>setSyncStatus('ok'),900);
+  } catch(e) {
+    setSyncStatus('err');
+    console.warn('Sheets save failed:',e);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// STATS ENGINE
+// ═══════════════════════════════════════════════════════
+
+// Cumulative stats for a bowler through matches[0..idx]
+// Counts only the specific games a bowler has scores for (supports partial series / subs)
+function bStats(name, gender, idx) {
+  let pins=0, games=0, highGame=0, highSer=0;
+  for (let i=0; i <= Math.min(idx, D.matches.length-1); i++) {
+    const b = D.matches[i][gender].chhs.find(x => x.name===name);
+    if (!b) continue;
+    if (b.g1===null && b.g2===null && b.g3===null) continue;
+    const g1=b.g1!==null&&b.g1!==''?+b.g1:null;
+    const g2=b.g2!==null&&b.g2!==''?+b.g2:null;
+    const g3=b.g3!==null&&b.g3!==''?+b.g3:null;
+    const bowled=[g1,g2,g3].filter(x=>x!==null);
+    if(!bowled.length) continue;
+    const ser=bowled.reduce((a,v)=>a+v,0);
+    pins+=ser; games+=bowled.length;
+    highGame=Math.max(highGame,...bowled);
+    // High series only counts full 3-game series
+    if(bowled.length===3) highSer=Math.max(highSer,ser);
+  }
+  return { pins, games, avg:games?pins/games:0, highGame, highSer };
+}
+
+// All unique CHHS bowler names for a gender (across all matches)
+function allNames(gender) {
+  const s=new Set();
+  D.matches.forEach(m => m[gender].chhs.forEach(b => { if(b&&b.name) s.add(b.name); }));
+  return [...s];
+}
+
+// Season-to-date stats for every CHHS bowler
+function seasonStats(gender) {
+  return allNames(gender).map(name => {
+    const st = bStats(name, gender, D.matches.length-1);
+    const matchCount = D.matches.filter(m => {
+      const b = m[gender].chhs.find(x=>x.name===name);
+      return b && (b.g1!==null||b.g2!==null||b.g3!==null);
+    }).length;
+    return { name, matchCount, ...st };
+  });
+}
+
+// Game/series totals and W/L for a match
+function matchResult(m) {
+  const side = (div) => {
+    const cG=[0,0,0], oG=[0,0,0];
+    (div.chhs||[]).forEach(b => {
+      if(!b) return;
+      cG[0]+=b.g1!=null&&b.g1!==''?+b.g1:0;
+      cG[1]+=b.g2!=null&&b.g2!==''?+b.g2:0;
+      cG[2]+=b.g3!=null&&b.g3!==''?+b.g3:0;
+    });
+    (div.opp||[]).forEach(b => {
+      if(!b) return;
+      oG[0]+=b.g1!=null&&b.g1!==''?+b.g1:0;
+      oG[1]+=b.g2!=null&&b.g2!==''?+b.g2:0;
+      oG[2]+=b.g3!=null&&b.g3!==''?+b.g3:0;
+    });
+    const cT=cG.reduce((a,v)=>a+v,0), oT=oG.reduce((a,v)=>a+v,0);
+    const r=i=>cG[i]>oG[i]?'W':cG[i]<oG[i]?'L':'T';
+    return { cG, oG, cT, oT, g1:r(0), g2:r(1), g3:r(2), ser:cT>oT?'W':cT<oT?'L':'T' };
+  };
+  return { boys:side(m.boys), girls:side(m.girls) };
+}
+
+// Season record — based on total pinfall (CHHS total vs opponent total)
+function seasonRecThrough(gender, throughIdx) {
+  let W=0,L=0,T=0;
+  for(let i=0; i<=throughIdx && i<D.matches.length; i++) {
+    const r=matchResult(D.matches[i])[gender];
+    if(r.cT>r.oT) W++; else if(r.cT<r.oT) L++; else T++;
+  }
+  return {W,L,T};
+}
+function seasonRec(gender) {
+  return seasonRecThrough(gender, D.matches.length-1);
+}
+
+// Highest CHHS series bowler in a specific match (for the share graphic)
+function matchHighSeries(m, gender) {
+  let best={name:'',ser:0};
+  (m[gender].chhs||[]).forEach(b=>{
+    if(!b||!b.name) return;
+    const g1=b.g1!=null&&b.g1!==''?+b.g1:0;
+    const g2=b.g2!=null&&b.g2!==''?+b.g2:0;
+    const g3=b.g3!=null&&b.g3!==''?+b.g3:0;
+    const ser=g1+g2+g3;
+    if(ser>best.ser) best={name:b.name,ser};
+  });
+  return best;
+}
+
+function matchHighGame(m, gender) {
+  let best={name:'',game:0};
+  (m[gender].chhs||[]).forEach(b=>{
+    if(!b||!b.name) return;
+    [b.g1,b.g2,b.g3].forEach(v=>{
+      if(v!=null&&v!==''){const g=+v;if(g>best.game)best={name:b.name,game:g};}
+    });
+  });
+  return best;
+}
+
+// ═══════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const fmt = (n,d=2) => (n!=null&&n!==''&&!isNaN(n)) ? (+n).toFixed(d) : '—';
+
+function toast(msg) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('on');
+  setTimeout(()=>el.classList.remove('on'),2600);
+}
+
+function badge(r, label) {
+  const won=r.cT>r.oT, tied=r.cT===r.oT;
+  const cls=won?'rw':tied?'rt':'rl';
+  const lbl=won?'W':tied?'T':'L';
+  return `<span class="rb ${cls}">${label} ${lbl} · ${r.cT}–${r.oT}</span>`;
+}
+
+function closeMod(id) { document.getElementById(id).classList.remove('on'); }
+
+// ═══════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════
+let cv='v-dash';
+function go(btn) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  cv=btn.dataset.v;
+  document.getElementById(cv).classList.add('active');
+  render(cv);
+}
+function render(id) {
+  if(id==='v-dash') rDash();
+  else if(id==='v-enter') rEnter();
+  else if(id==='v-cards') rCards();
+  else if(id==='v-stats') rStats();
+  else if(id==='v-roster') rRoster();
+}
+
+// ═══════════════════════════════════════════════════════
+// SCORECARD HTML (reused by Dashboard + Modal)
+// ═══════════════════════════════════════════════════════
+function scorecardHTML(matchIdx) {
+  const m=D.matches[matchIdx];
+  const r=matchResult(m);
+
+  const half = (gender) => {
+    const div=m[gender];
+    const gr=r[gender];
+    const label=gender==='boys'?'Boys':'Girls';
+
+    // Color helper: green for winner, red for loser, blank for tie
+    const gcol=(c,o)=>c>o?'background:#d1fae5':c<o?'background:#fee2e2':'';
+
+    // CHHS rows
+    const chhsRows = (div.chhs||[]).map((b) => {
+      if(!b||!b.name) return '';
+      const prevSt=bStats(b.name,gender,matchIdx-1);
+      const newSt =bStats(b.name,gender,matchIdx);
+      const isNew =prevSt.games===0;
+      const prevAvg=isNew?null:prevSt.avg;
+      const newAvg =newSt.avg;
+      const cls=isNew?'avg-up':(prevAvg!==null?(newAvg>prevAvg+.005?'avg-up':newAvg<prevAvg-.005?'avg-dn':''):'');
+      const g1=b.g1!=null&&b.g1!==''?+b.g1:null;
+      const g2=b.g2!=null&&b.g2!==''?+b.g2:null;
+      const g3=b.g3!=null&&b.g3!==''?+b.g3:null;
+      const bowled=[g1,g2,g3].filter(x=>x!==null);
+      const tot=bowled.reduce((a,v)=>a+v,0);
+      const isSub=bowled.length>0&&bowled.length<3;
+      return `<tr class="${cls}">
+        <td>${esc(b.name)}${isSub?'<span style="font-size:10px;color:var(--muted);margin-left:4px;font-style:normal">(sub)</span>':''}</td>
+        <td>${g1!==null?g1:'<span style="color:#ccc">—</span>'}</td>
+        <td>${g2!==null?g2:'<span style="color:#ccc">—</span>'}</td>
+        <td>${g3!==null?g3:'<span style="color:#ccc">—</span>'}</td>
+        <td>${tot||''}</td>
+        <td>${prevAvg!==null?fmt(prevAvg):'N/A'}</td>
+        <td class="ac2">${newSt.games>0?fmt(newAvg):'—'}</td>
+      </tr>`;
+    }).join('');
+
+    // Opp rows
+    const oppRows = (div.opp||[]).map((o,i) => {
+      const g1=o&&o.g1!=null&&o.g1!==''?+o.g1:'';
+      const g2=o&&o.g2!=null&&o.g2!==''?+o.g2:'';
+      const g3=o&&o.g3!=null&&o.g3!==''?+o.g3:'';
+      const tot=(+g1||0)+(+g2||0)+(+g3||0);
+      return `<tr>
+        <td>#${i+1}</td>
+        <td>${g1}</td><td>${g2}</td><td>${g3}</td>
+        <td>${tot||''}</td>
+      </tr>`;
+    }).join('');
+
+    return `
+      <div>
+        <div class="sh">${esc(D.teamName)} ${label}</div>
+        <table class="sc">
+          <thead><tr><th>Name</th><th>G1</th><th>G2</th><th>G3</th><th>Total</th><th>Prev Avg</th><th>New Avg</th></tr></thead>
+          <tbody>
+            ${chhsRows}
+            <tr class="tot">
+              <td>Totals</td>
+              <td style="${gcol(gr.cG[0],gr.oG[0])}">${gr.cG[0]}</td>
+              <td style="${gcol(gr.cG[1],gr.oG[1])}">${gr.cG[1]}</td>
+              <td style="${gcol(gr.cG[2],gr.oG[2])}">${gr.cG[2]}</td>
+              <td>${gr.cT}</td><td></td><td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <div class="sh">${esc(m.opponent)} ${label}</div>
+        <table class="sc">
+          <thead><tr><th>#</th><th>G1</th><th>G2</th><th>G3</th><th>Total</th></tr></thead>
+          <tbody>
+            ${oppRows}
+            <tr class="tot">
+              <td>Totals</td>
+              <td style="${gcol(gr.oG[0],gr.cG[0])}">${gr.oG[0]}</td>
+              <td style="${gcol(gr.oG[1],gr.cG[1])}">${gr.oG[1]}</td>
+              <td style="${gcol(gr.oG[2],gr.cG[2])}">${gr.oG[2]}</td>
+              <td>${gr.oT}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>`;
+  };
+
+  return `
+    <div class="two" style="margin-bottom:4px">${half('boys')}</div>
+    <hr class="dv">
+    <div class="two">${half('girls')}</div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════
+function rDash() {
+  const el=document.getElementById('v-dash');
+  const n=D.matches.length;
+
+  if(!n) {
+    el.innerHTML=`
+      <div class="tiles">
+        <div class="tile ac"><div class="lbl">Matches</div><div class="val">0</div></div>
+        <div class="tile"><div class="lbl">Boys Record</div><div class="val" style="font-size:19px">—</div></div>
+        <div class="tile"><div class="lbl">Girls Record</div><div class="val" style="font-size:19px">—</div></div>
+      </div>
+      <div class="empty">
+        <div class="ei">🎳</div>
+        <h3>No matches recorded yet</h3>
+        <p>Use <strong>Enter Match</strong> to log your first match, or set up your <strong>Roster</strong> first.</p>
+        <br><div class="flex" style="justify-content:center;gap:10px">
+          <button class="btn btn-r" onclick="document.querySelector('[data-v=v-enter]').click()">➕ Enter First Match</button>
+          <button class="btn btn-g" onclick="document.querySelector('[data-v=v-roster]').click()">👥 Set Up Roster</button>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const br=seasonRec('boys'), gr2=seasonRec('girls');
+  const boysS=seasonStats('boys').filter(b=>b.games>0).sort((a,b)=>b.avg-a.avg);
+  const girlsS=seasonStats('girls').filter(b=>b.games>0).sort((a,b)=>b.avg-a.avg);
+  const teamAvg=(gender)=>{
+    const all=seasonStats(gender).filter(b=>b.games>0);
+    const tp=all.reduce((s,b)=>s+b.pins,0), tg=all.reduce((s,b)=>s+b.games,0);
+    return tg?tp/tg:0;
+  };
+  const recStr=r=>`${r.W}-${r.L}${r.T?'-'+r.T:''}`;
+  const lm=D.matches[n-1];
+  const lr=matchResult(lm);
+
+  el.innerHTML=`
+    <div class="tiles">
+      <div class="tile ac"><div class="lbl">Matches Played</div><div class="val">${n}</div></div>
+      <div class="tile"><div class="lbl">Boys Record</div><div class="val">${recStr(br)}</div><div class="sub">W-L total pins</div></div>
+      <div class="tile"><div class="lbl">Girls Record</div><div class="val">${recStr(gr2)}</div><div class="sub">W-L total pins</div></div>
+      <div class="tile"><div class="lbl">Boys Team Avg</div><div class="val">${fmt(teamAvg('boys'),1)}</div><div class="sub">this season</div></div>
+      <div class="tile"><div class="lbl">Girls Team Avg</div><div class="val">${fmt(teamAvg('girls'),1)}</div><div class="sub">this season</div></div>
+      ${boysS[0]?`<div class="tile"><div class="lbl">Top Boys Avg</div><div class="val">${fmt(boysS[0].avg,1)}</div><div class="sub">${esc(boysS[0].name)}</div></div>`:''}
+      ${girlsS[0]?`<div class="tile"><div class="lbl">Top Girls Avg</div><div class="val">${fmt(girlsS[0].avg,1)}</div><div class="sub">${esc(girlsS[0].name)}</div></div>`:''}
+    </div>
+    <div class="card">
+      <div class="ctitle">Latest Match — #${lm.matchNum} · vs ${esc(lm.opponent)}${lm.date?' · '+lm.date:''}</div>
+      <div class="flex" style="margin-bottom:14px">
+        ${badge(lr.boys,'Boys')} ${badge(lr.girls,'Girls')}
+      </div>
+      ${scorecardHTML(n-1)}
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+// ENTER MATCH
+// ═══════════════════════════════════════════════════════
+function rEnter() {
+  const el=document.getElementById('v-enter');
+  const nextNum=D.matches.length+1;
+  const today=new Date().toISOString().slice(0,10);
+
+  const bList=D.roster.boys.map(n=>`<option value="${esc(n)}">`).join('');
+  const gList=D.roster.girls.map(n=>`<option value="${esc(n)}">`).join('');
+
+  // Build sorted lineup: roster members by descending avg, then blank rows to reach min 6
+  const lineupByAvg = (gender) => {
+    const stats = D.roster[gender].map(name => {
+      const st = bStats(name, gender, D.matches.length-1);
+      return { name, avg: st.avg, games: st.games };
+    });
+    // Sort: bowlers with games first (desc avg), then no-games alphabetically
+    stats.sort((a,b) => {
+      if(a.games>0 && b.games>0) return b.avg - a.avg;
+      if(a.games>0) return -1;
+      if(b.games>0) return 1;
+      return a.name.localeCompare(b.name);
+    });
+    return stats;
+  };
+
+  // CHHS entry rows — blank game = bowler didn't bowl that game
+  const cRow=(gender,listId,name='',avgHint='',gameCount=0)=>`
+    <tr>
+      <td style="display:flex;align-items:center;gap:5px">
+        <div style="flex:1;min-width:0">
+          <input type="text" placeholder="Bowler name" list="${listId}" value="${esc(name)}" style="width:100%" oninput="updateAvgHint(this)">
+          <div class="avg-hint" style="font-size:10px;color:var(--muted);margin-top:1px">${avgHint&&gameCount?`Avg: ${avgHint} · ${gameCount} game${gameCount===1?'':'s'}`:''}</div>
+        </div>
+        <button type="button" title="Remove row" onclick="this.closest('tr').remove();teamTotals('${gender}',false)"
+          style="background:none;border:none;cursor:pointer;color:#ccc;font-size:16px;line-height:1;padding:0 2px;flex-shrink:0"
+          onmouseover="this.style.color='#c8102e'" onmouseout="this.style.color='#ccc'">×</button>
+      </td>
+      <td><input type="number" min="0" max="300" placeholder="—" oninput="recalc('${gender}',this)"></td>
+      <td><input type="number" min="0" max="300" placeholder="—" oninput="recalc('${gender}',this)"></td>
+      <td><input type="number" min="0" max="300" placeholder="—" oninput="recalc('${gender}',this)"></td>
+      <td class="tc">—</td>
+    </tr>`;
+
+  const cRows=(gender,listId)=>{
+    const lineup = lineupByAvg(gender);
+    const rows = lineup.map(({name,avg,games})=>
+      cRow(gender, listId, name, games>0?avg.toFixed(1):'', games)
+    );
+    // Pad to at least 6 rows with blank rows
+    while(rows.length < 6) rows.push(cRow(gender, listId));
+    return rows.join('');
+  };
+
+  // Opponent entry rows (numbered, 3 games)
+  const oRows=(gender,count=6)=>Array.from({length:count},(_,i)=>`
+    <tr>
+      <td style="color:var(--muted);font-weight:600;font-style:italic">#${i+1}</td>
+      <td><input type="number" min="0" max="300" placeholder="—" oninput="orecalc('${gender}',this)"></td>
+      <td><input type="number" min="0" max="300" placeholder="—" oninput="orecalc('${gender}',this)"></td>
+      <td><input type="number" min="0" max="300" placeholder="—" oninput="orecalc('${gender}',this)"></td>
+      <td class="tc">—</td>
+    </tr>`).join('');
+
+  const tfoot=(pfx)=>`<tfoot><tr>
+    <td style="font-style:italic">Team Total</td>
+    <td class="tc" id="${pfx}-g1">—</td>
+    <td class="tc" id="${pfx}-g2">—</td>
+    <td class="tc" id="${pfx}-g3">—</td>
+    <td class="tc" id="${pfx}-tot">—</td>
+  </tr></tfoot>`;
+
+  el.innerHTML=`
+    <datalist id="dl-boys">${bList}</datalist>
+    <datalist id="dl-girls">${gList}</datalist>
+    <div class="ph"><h2>Enter Match Scores</h2></div>
+
+    <div class="fcard">
+      <h3>Match Info</h3>
+      <div class="frow">
+        <div class="fg"><label>Match #</label><input id="en-num" type="number" value="${nextNum}" min="1" style="width:85px"></div>
+        <div class="fg"><label>Date</label><input id="en-date" type="date" value="${today}" style="width:160px"></div>
+        <div class="fg" style="flex:1"><label>Opponent Name</label><input id="en-opp" type="text" placeholder="e.g. Desoto Central" style="width:100%;max-width:280px"></div>
+      </div>
+      <p class="note">Bowling 2 opponents in one day? Enter them as two separate matches with the same date.</p>
+    </div>
+
+    <div class="note" style="max-width:100%;margin-bottom:14px">
+      Roster is pre-sorted by season average (highest first). Edit any name, add subs with <strong>＋ Add Bowler</strong>, or remove rows with ×.
+      Leave a game blank if that bowler didn't bowl it — averages only count games actually bowled.
+    </div>
+
+    <div class="two">
+      <div class="fcard">
+        <h3>🎳 Boys — ${esc(D.teamName)}</h3>
+        <table class="et">
+          <thead><tr><th>Name</th><th>Game 1</th><th>Game 2</th><th>Game 3</th><th>Total</th></tr></thead>
+          <tbody id="eb-chhs">${cRows('boys','dl-boys')}</tbody>
+          ${tfoot('tb-b')}
+        </table>
+        <button class="btn btn-g btn-sm" style="margin-top:8px" onclick="addBowlerRow('boys')">＋ Add Bowler</button>
+      </div>
+      <div class="fcard">
+        <h3>🎳 Boys — Opponent</h3>
+        <table class="et">
+          <thead><tr><th>#</th><th>Game 1</th><th>Game 2</th><th>Game 3</th><th>Total</th></tr></thead>
+          <tbody id="eb-opp">${oRows('boys')}</tbody>
+          ${tfoot('tb-ob')}
+        </table>
+      </div>
+    </div>
+
+    <div class="two">
+      <div class="fcard">
+        <h3>🎳 Girls — ${esc(D.teamName)}</h3>
+        <table class="et">
+          <thead><tr><th>Name</th><th>Game 1</th><th>Game 2</th><th>Game 3</th><th>Total</th></tr></thead>
+          <tbody id="eg-chhs">${cRows('girls','dl-girls')}</tbody>
+          ${tfoot('tb-g')}
+        </table>
+        <button class="btn btn-g btn-sm" style="margin-top:8px" onclick="addBowlerRow('girls')">＋ Add Bowler</button>
+      </div>
+      <div class="fcard">
+        <h3>🎳 Girls — Opponent</h3>
+        <table class="et">
+          <thead><tr><th>#</th><th>Game 1</th><th>Game 2</th><th>Game 3</th><th>Total</th></tr></thead>
+          <tbody id="eg-opp">${oRows('girls')}</tbody>
+          ${tfoot('tb-og')}
+        </table>
+      </div>
+    </div>
+
+    <div class="flex">
+      <button class="btn btn-r" onclick="submitMatch()">💾 Save Match</button>
+      <button class="btn btn-g" onclick="rEnter()">↺ Clear Form</button>
+    </div>`;
+}
+
+function recalc(gender, inp) {
+  const tr=inp.closest('tr');
+  const nums=[...tr.querySelectorAll('input[type=number]')];
+  tr.querySelector('.tc').textContent=nums.reduce((s,n)=>s+(+n.value||0),0)||'—';
+  teamTotals(gender,false);
+}
+
+function orecalc(gender, inp) {
+  const tr=inp.closest('tr');
+  const nums=[...tr.querySelectorAll('input[type=number]')];
+  tr.querySelector('.tc').textContent=nums.reduce((s,n)=>s+(+n.value||0),0)||'—';
+  teamTotals(gender,true);
+}
+
+function updateAvgHint(inp) {
+  const name=inp.value.trim();
+  const tbody=inp.closest('tbody');
+  const gender=tbody&&tbody.id.includes('girls')?'girls':'boys';
+  const hintEl=inp.closest('td').querySelector('.avg-hint');
+  if(!hintEl) return;
+  if(!name){hintEl.textContent='';return;}
+  const st=bStats(name,gender,D.matches.length-1);
+  hintEl.textContent=st.games>0?`Avg: ${st.avg.toFixed(1)} · ${st.games} game${st.games===1?'':'s'}`:'';
+}
+
+function teamTotals(gender, isOpp) {
+  const tbId=isOpp?(gender==='boys'?'eb-opp':'eg-opp'):(gender==='boys'?'eb-chhs':'eg-chhs');
+  const pfx =isOpp?(gender==='boys'?'tb-ob':'tb-og'):(gender==='boys'?'tb-b':'tb-g');
+  const rows=[...document.getElementById(tbId).rows];
+  const g=[0,0,0];
+  rows.forEach(tr=>{
+    const nums=tr.querySelectorAll('input[type=number]');
+    if(nums.length>=3){ g[0]+=+nums[0].value||0; g[1]+=+nums[1].value||0; g[2]+=+nums[2].value||0; }
+  });
+  ['g1','g2','g3'].forEach((k,i)=>document.getElementById(`${pfx}-${k}`).textContent=g[i]||'—');
+  document.getElementById(`${pfx}-tot`).textContent=(g[0]+g[1]+g[2])||'—';
+}
+
+function addBowlerRow(gender) {
+  const tbId = gender==='boys' ? 'eb-chhs' : 'eg-chhs';
+  const listId = gender==='boys' ? 'dl-boys' : 'dl-girls';
+  const tbody = document.getElementById(tbId);
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="display:flex;align-items:center;gap:5px">
+      <div style="flex:1;min-width:0">
+        <input type="text" placeholder="Bowler name" list="${listId}" style="width:100%" oninput="updateAvgHint(this)">
+        <div class="avg-hint" style="font-size:10px;color:var(--muted);margin-top:1px"></div>
+      </div>
+      <button type="button" title="Remove row" onclick="this.closest('tr').remove();teamTotals('${gender}',false)"
+        style="background:none;border:none;cursor:pointer;color:#ccc;font-size:16px;line-height:1;padding:0 2px;flex-shrink:0"
+        onmouseover="this.style.color='#c8102e'" onmouseout="this.style.color='#ccc'">×</button>
+    </td>
+    <td><input type="number" min="0" max="300" placeholder="—" oninput="recalc('${gender}',this)"></td>
+    <td><input type="number" min="0" max="300" placeholder="—" oninput="recalc('${gender}',this)"></td>
+    <td><input type="number" min="0" max="300" placeholder="—" oninput="recalc('${gender}',this)"></td>
+    <td class="tc">—</td>`;
+  tbody.appendChild(tr);
+  tr.querySelector('input[type=text]').focus();
+}
+
+function readRows(gender, isOpp) {
+  const tbId=isOpp?(gender==='boys'?'eb-opp':'eg-opp'):(gender==='boys'?'eb-chhs':'eg-chhs');
+  return [...document.getElementById(tbId).rows].map(tr=>{
+    const nums=tr.querySelectorAll('input[type=number]');
+    if(isOpp) {
+      return { g1:nums[0].value||null, g2:nums[1].value||null, g3:nums[2].value||null };
+    } else {
+      const ni=tr.querySelector('input[type=text]');
+      return { name:ni?ni.value.trim():'', g1:nums[0].value||null, g2:nums[1].value||null, g3:nums[2].value||null };
+    }
+  });
+}
+
+function submitMatch() {
+  const num=+document.getElementById('en-num').value;
+  const date=document.getElementById('en-date').value;
+  const opp=document.getElementById('en-opp').value.trim();
+  if(!opp){ toast('⚠ Enter opponent name'); return; }
+
+  const boysC=readRows('boys',false), boysO=readRows('boys',true);
+  const girlsC=readRows('girls',false), girlsO=readRows('girls',true);
+
+  const anyData=[...boysC,...girlsC].some(b=>b.name&&(b.g1||b.g2||b.g3));
+  if(!anyData){ toast('⚠ Enter at least some scores'); return; }
+
+  // Auto-add new names to roster
+  boysC.forEach(b=>{ if(b.name&&!D.roster.boys.includes(b.name)) D.roster.boys.push(b.name); });
+  girlsC.forEach(b=>{ if(b.name&&!D.roster.girls.includes(b.name)) D.roster.girls.push(b.name); });
+
+  D.matches.push({ id:Date.now(), matchNum:num, date, opponent:opp,
+    boys:{chhs:boysC, opp:boysO}, girls:{chhs:girlsC, opp:girlsO} });
+  D.matches.sort((a,b)=>a.matchNum-b.matchNum);
+  save();
+
+  toast(`✓ Match #${num} vs ${opp} saved!`);
+  setTimeout(()=>document.querySelector('[data-v="v-cards"]').click(), 600);
+}
+
+// ═══════════════════════════════════════════════════════
+// SCORECARDS
+// ═══════════════════════════════════════════════════════
+function rCards() {
+  const el=document.getElementById('v-cards');
+  if(!D.matches.length){
+    el.innerHTML=`<div class="empty"><div class="ei">📋</div><h3>No matches yet</h3><p>Enter your first match to see scorecards here.</p></div>`;
+    return;
+  }
+  const items=[...D.matches].reverse().map((m,ri)=>{
+    const idx=D.matches.length-1-ri;
+    const r=matchResult(m);
+    return `<div class="mi" onclick="openSC(${idx})">
+      <div>
+        <div class="mn">Match #${m.matchNum}</div>
+        <div class="op">vs ${esc(m.opponent)}</div>
+        <div class="dt">${m.date||''}</div>
+      </div>
+      <div class="mir">
+        ${badge(r.boys,'Boys')} ${badge(r.girls,'Girls')}
+        <button class="btn btn-g btn-sm" onclick="event.stopPropagation();shareMatch(${idx})" title="Share card">📸</button>
+        <button class="btn btn-g btn-sm" onclick="event.stopPropagation();printMatch(${idx})" title="Print scorecard">🖨</button>
+        <button class="btn btn-x btn-sm" onclick="event.stopPropagation();delMatch(${idx})" title="Delete match">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+  el.innerHTML=`<div class="ph"><h2>Match Scorecards</h2><span style="font-size:12px;color:var(--muted)">Click a match to view full scorecard</span></div>${items}`;
+}
+
+function openSC(idx) {
+  const m=D.matches[idx];
+  const r=matchResult(m);
+  document.getElementById('scModTitle').textContent=`Match #${m.matchNum} · ${esc(D.teamName)} vs ${esc(m.opponent)}`;
+  document.getElementById('scModBody').innerHTML=`
+    <div class="flex" style="margin-bottom:14px">
+      ${badge(r.boys,'Boys')} ${badge(r.girls,'Girls')}
+      ${m.date?`<span style="font-size:12px;color:var(--muted)">${m.date}</span>`:''}
+      <button class="btn btn-g btn-sm" style="margin-left:auto" onclick="shareMatch(${idx})">📸 Share Card</button>
+      <button class="btn btn-g btn-sm" onclick="printMatch(${idx})">🖨 Print</button>
+    </div>
+    ${scorecardHTML(idx)}`;
+  document.getElementById('scMod').classList.add('on');
+}
+
+function delMatch(idx) {
+  if(!confirm('Delete this match? This cannot be undone.')) return;
+  D.matches.splice(idx,1);
+  save(); toast('Match deleted'); rCards();
+}
+
+// ═══════════════════════════════════════════════════════
+// SHARE CARD (social media)
+// ═══════════════════════════════════════════════════════
+function abbr(name) {
+  const words = (name||'').trim().split(/\s+/);
+  if(words.length===1) return words[0].substring(0,6).toUpperCase();
+  // Single short all-caps token (like "CHHS") — use it alone
+  if(words[0].length<=5 && words[0]===words[0].toUpperCase() && /^[A-Z]+$/.test(words[0])) return words[0];
+  // Two-word name ≤14 chars total — show both words
+  const two = words.slice(0,2).join(' ');
+  if(two.length<=14) return two.toUpperCase();
+  // Fallback: initials
+  return words.map(w=>w[0]||'').join('').toUpperCase();
+}
+
+function shareMatch(idx) {
+  const m = D.matches[idx];
+  const r = matchResult(m);
+  const opp = esc(m.opponent||'OPP');
+  const oppAbbr = abbr(m.opponent||'OPP');
+
+  const teamLabel = abbr(D.teamName);
+  const oppLabel = abbr(m.opponent||'OPP');
+
+  const divBlock = (gender) => {
+    const gr = r[gender];
+    const won = gr.cT > gr.oT, tied = gr.cT === gr.oT;
+    const label = gender==='boys' ? 'BOYS' : 'GIRLS';
+    const hs = matchHighSeries(m, gender);
+    const hg = matchHighGame(m, gender);
+    const rec = seasonRecThrough(gender, idx);
+    const recStr = `${rec.W}-${rec.L}${rec.T?'-'+rec.T:''}`;
+    const resultWord = won?'WIN':tied?'TIE':'LOSS';
+    const resultBg = won?'#166534':tied?'#78350f':'#7f1d1d';
+    // Font size for column labels scales with length
+    const teamLblSz = teamLabel.length>12?'9px':'11px';
+    const oppLblSz  = oppLabel.length>12?'9px':'11px';
+
+    return `<div style="flex:1;min-width:0;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden">
+      <div style="background:#c8102e;padding:7px 16px;display:flex;align-items:center;justify-content:space-between">
+        <span style="font-family:'Anton',sans-serif;font-size:15px;letter-spacing:2px;color:#fff">${label}</span>
+        <span style="font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;color:rgba(255,255,255,.85);letter-spacing:1px">${resultWord}</span>
+      </div>
+      <div style="padding:14px 18px 12px">
+        <!-- Scores -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="text-align:center;flex:1">
+            <div style="font-family:'Oswald',sans-serif;font-size:${teamLblSz};font-weight:500;color:rgba(255,255,255,.45);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">${teamLabel}</div>
+            <div style="font-family:'Anton',sans-serif;font-size:44px;color:${won?'#86efac':tied?'#fde68a':'#fca5a5'};line-height:1">${gr.cT}</div>
+          </div>
+          <div style="font-family:'Oswald',sans-serif;font-size:14px;color:rgba(255,255,255,.25);padding:0 8px;padding-top:14px">VS</div>
+          <div style="text-align:center;flex:1">
+            <div style="font-family:'Oswald',sans-serif;font-size:${oppLblSz};font-weight:500;color:rgba(255,255,255,.45);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">${oppLabel}</div>
+            <div style="font-family:'Anton',sans-serif;font-size:44px;color:rgba(255,255,255,.65);line-height:1">${gr.oT}</div>
+          </div>
+        </div>
+        <!-- High series + High game side by side -->
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          ${hs.ser>0?`<div style="flex:1;background:rgba(0,0,0,.25);border-radius:8px;padding:7px 10px;display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div style="font-family:'Oswald',sans-serif;font-size:9px;font-weight:500;color:rgba(255,255,255,.4);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px">High Series</div>
+              <div style="font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;color:#fff">${esc(hs.name)}</div>
+            </div>
+            <div style="font-family:'Anton',sans-serif;font-size:24px;color:#fbbf24;letter-spacing:-.5px">${hs.ser}</div>
+          </div>`:''}
+          ${hg.game>0?`<div style="flex:1;background:rgba(0,0,0,.25);border-radius:8px;padding:7px 10px;display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div style="font-family:'Oswald',sans-serif;font-size:9px;font-weight:500;color:rgba(255,255,255,.4);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px">High Game</div>
+              <div style="font-family:'Oswald',sans-serif;font-size:12px;font-weight:600;color:#fff">${esc(hg.name)}</div>
+            </div>
+            <div style="font-family:'Anton',sans-serif;font-size:24px;color:#fb923c;letter-spacing:-.5px">${hg.game}</div>
+          </div>`:''}
+        </div>
+        <!-- Record -->
+        <div style="background:${resultBg};border-radius:8px;padding:6px 14px;display:flex;align-items:center;justify-content:space-between">
+          <div style="font-family:'Oswald',sans-serif;font-size:11px;font-weight:500;color:rgba(255,255,255,.65);letter-spacing:1px;text-transform:uppercase">${label} Record</div>
+          <div style="font-family:'Anton',sans-serif;font-size:18px;color:#fff;letter-spacing:.5px">${recStr}</div>
+        </div>
+      </div>
+    </div>`;
+  };
+
+  const html = `<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Match Results — ${esc(D.teamName)}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600;700&family=Pacifico&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:940px;height:760px;overflow:hidden}
+body{
+  font-family:'Oswald',system-ui,sans-serif;
+  background:
+    radial-gradient(ellipse 90% 55% at 50% 108%, rgba(100,5,10,.95) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 40% at 70% -10%, rgba(70,0,8,.7) 0%, transparent 50%),
+    linear-gradient(170deg, #140606 0%, #0e0909 35%, #0a0505 65%, #0d0a07 100%);
+  display:flex;align-items:center;justify-content:center;position:relative
+}
+body::before{content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(-45deg,transparent,transparent 18px,rgba(255,255,255,.013) 18px,rgba(255,255,255,.013) 19px);
+  pointer-events:none}
+.wrap{width:860px;position:relative;z-index:1}
+.hint{position:fixed;bottom:12px;right:14px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.5);padding:5px 12px;border-radius:5px;font-size:11px;pointer-events:none;font-family:'Oswald',sans-serif}
+</style></head><body>
+<div class="wrap">
+  <div style="text-align:center;margin-bottom:6px">
+    <div style="display:inline-flex;align-items:center;gap:14px">
+      <div style="text-align:left">
+        <div style="font-family:'Anton',sans-serif;font-size:${D.teamName.replace(/bowling/i,'').trim().length>15?'26':'38'}px;color:#fff;letter-spacing:3px;line-height:1;text-transform:uppercase">${esc(D.teamName.replace(/bowling/i,'').trim())}</div>
+        <div style="font-family:'Anton',sans-serif;font-size:${D.teamName.replace(/bowling/i,'').trim().length>15?'26':'38'}px;letter-spacing:3px;line-height:1;text-transform:uppercase;-webkit-text-stroke:2px #fff;color:#c8102e">BOWLING</div>
+      </div>
+      <div style="filter:drop-shadow(0 0 12px rgba(200,16,46,.8))"><img src="https://assets.scorebooklive.com/r/192x/uploads/production/school/18085/image/Center_Hill__MA__Mustangs_logo.webp" style="height:70px;width:auto;object-fit:contain" onerror="this.style.display='none'"></div>
+    </div>
+  </div>
+  <div style="position:relative;margin:0 -10px 18px;text-align:center">
+    <div style="border-top:2px solid #c8102e;border-bottom:2px solid #c8102e;padding:6px 0;background:rgba(200,16,46,.08)">
+      <span style="font-family:'Pacifico',cursive;font-size:38px;color:#fff;text-shadow:2px 2px 8px rgba(200,16,46,.6)">Last Week's Scores</span>
+    </div>
+  </div>
+  <div style="text-align:center;margin-bottom:16px">
+    <span style="font-family:'Oswald',sans-serif;font-size:14px;font-weight:500;color:rgba(255,255,255,.45);letter-spacing:1.5px;text-transform:uppercase">vs ${opp}${m.date?' · '+(()=>{const d=new Date(m.date);return isNaN(d)?m.date:`${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`;})():''}</span>
+  </div>
+  <div style="display:flex;gap:16px">
+    ${divBlock('boys')}
+    ${divBlock('girls')}
+  </div>
+  <div style="margin-top:14px;text-align:center">
+    <span style="font-family:'Oswald',sans-serif;font-size:12px;font-weight:500;color:rgba(255,255,255,.2);letter-spacing:2px;text-transform:uppercase">${esc(D.season)} Season</span>
+  </div>
+</div>
+<div class="hint">📸 Screenshot to share</div>
+</body></html>`;
+
+  const w = window.open('', '_blank', 'width=940,height=760,menubar=no,toolbar=no,location=no,resizable=no');
+  if(w){ w.document.write(html); w.document.close(); }
+  else toast('⚠ Allow pop-ups to open the share card');
+}
+
+// ═══════════════════════════════════════════════════════
+// PRINT SCORECARD
+// ═══════════════════════════════════════════════════════
+function printMatch(idx) {
+  const m = D.matches[idx];
+  const r = matchResult(m);
+
+  const half = (gender) => {
+    const div = m[gender];
+    const gr = r[gender];
+    const label = gender==='boys'?'Boys':'Girls';
+    const gcol = (c,o) => c>o?'background:#d4edda':c<o?'background:#f8d7da':'';
+
+    const cRows = (div.chhs||[]).map(b => {
+      if(!b||!b.name) return '';
+      const prevSt = bStats(b.name,gender,idx-1);
+      const newSt  = bStats(b.name,gender,idx);
+      const isNew  = prevSt.games===0;
+      const pa     = isNew?null:prevSt.avg;
+      const na     = newSt.avg;
+      const cls    = isNew?'aug':(pa!==null?(na>pa+.005?'aug':na<pa-.005?'adn':''):'');
+      const g1=b.g1!=null&&b.g1!==''?+b.g1:null;
+      const g2=b.g2!=null&&b.g2!==''?+b.g2:null;
+      const g3=b.g3!=null&&b.g3!==''?+b.g3:null;
+      const bowled=[g1,g2,g3].filter(x=>x!==null);
+      const isSub=bowled.length>0&&bowled.length<3;
+      return `<tr class="${cls}">
+        <td>${esc(b.name)}${isSub?' <em style="font-size:9px;color:#888">(sub)</em>':''}</td>
+        <td>${g1!==null?g1:'—'}</td><td>${g2!==null?g2:'—'}</td><td>${g3!==null?g3:'—'}</td>
+        <td>${bowled.reduce((a,v)=>a+v,0)||''}</td>
+        <td>${pa!==null?fmt(pa):'N/A'}</td>
+        <td class="ac2">${newSt.games>0?fmt(na):'—'}</td>
+      </tr>`;
+    }).join('');
+
+    const oRows = (div.opp||[]).map((o,i)=>{
+      const g1=o&&o.g1!=null&&o.g1!==''?+o.g1:'';
+      const g2=o&&o.g2!=null&&o.g2!==''?+o.g2:'';
+      const g3=o&&o.g3!=null&&o.g3!==''?+o.g3:'';
+      return `<tr><td>#${i+1}</td><td>${g1}</td><td>${g2}</td><td>${g3}</td><td>${(+g1||0)+(+g2||0)+(+g3||0)||''}</td></tr>`;
+    }).join('');
+
+    return `
+      <div class="half">
+        <h3>${esc(D.teamName)} — ${label}</h3>
+        <table><thead><tr><th>Name</th><th>G1</th><th>G2</th><th>G3</th><th>Total</th><th>Prev Avg</th><th>New Avg</th></tr></thead>
+        <tbody>
+          ${cRows}
+          <tr class="tot">
+            <td>Totals</td>
+            <td style="${gcol(gr.cG[0],gr.oG[0])}">${gr.cG[0]}</td>
+            <td style="${gcol(gr.cG[1],gr.oG[1])}">${gr.cG[1]}</td>
+            <td style="${gcol(gr.cG[2],gr.oG[2])}">${gr.cG[2]}</td>
+            <td>${gr.cT}</td><td></td><td></td>
+          </tr>
+        </tbody></table>
+        <h3 style="margin-top:14px">${esc(m.opponent)} — ${label}</h3>
+        <table><thead><tr><th>#</th><th>G1</th><th>G2</th><th>G3</th><th>Total</th></tr></thead>
+        <tbody>
+          ${oRows}
+          <tr class="tot">
+            <td>Totals</td>
+            <td style="${gcol(gr.oG[0],gr.cG[0])}">${gr.oG[0]}</td>
+            <td style="${gcol(gr.oG[1],gr.cG[1])}">${gr.oG[1]}</td>
+            <td style="${gcol(gr.oG[2],gr.cG[2])}">${gr.oG[2]}</td>
+            <td>${gr.oT}</td>
+          </tr>
+        </tbody></table>
+      </div>`;
+  };
+
+  const br = r.boys, gr2 = r.girls;
+  const rline = (cT,oT)=>cT>oT?`<b style="color:green">WIN ${cT}–${oT}</b>`:cT<oT?`<b style="color:#c0392b">LOSS ${cT}–${oT}</b>`:`<b>TIE ${cT}–${oT}</b>`;
+
+  const html = `<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8">
+<title>Match #${m.matchNum} Scorecard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;font-size:12px;color:#111;padding:18px 24px}
+h1{font-size:19px;font-weight:900;border-bottom:3px solid #c8102e;padding-bottom:7px;margin-bottom:4px}
+.sub{font-size:12px;color:#555;margin-bottom:12px}
+.results{display:flex;gap:24px;margin-bottom:16px;flex-wrap:wrap}
+.res{background:#f4f5f7;border-radius:6px;padding:8px 16px;font-size:12px}
+.res .div{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#777;font-weight:700}
+.halves{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.half{}
+h3{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#c8102e;border-bottom:1.5px solid #c8102e;padding-bottom:4px;margin-bottom:7px}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{background:#111;color:#fff;padding:4px 8px;text-align:center;font-size:9.5px;text-transform:uppercase}
+th:first-child{text-align:left}
+td{padding:4px 8px;border-bottom:1px solid #e5e7eb;text-align:center}
+td:first-child{text-align:left;font-style:italic}
+tr:nth-child(even) td{background:#fafbfc}
+tr.tot td{font-weight:800;background:#f3f4f6!important}
+tr.aug td.ac2{background:#d4edda!important;color:#155724;font-weight:800}
+tr.adn td.ac2{background:#f8d7da!important;color:#721c24;font-weight:800}
+.foot{margin-top:16px;font-size:10px;color:#aaa;text-align:center;border-top:1px solid #eee;padding-top:9px}
+@media print{body{padding:10px 14px}.foot{display:none}}
+</style></head><body>
+<h1>🎳 ${esc(D.teamName)} vs ${esc(m.opponent)}</h1>
+<div class="sub">Match #${m.matchNum}${m.date?' &nbsp;·&nbsp; '+m.date:''} &nbsp;·&nbsp; ${D.season} Season</div>
+<div class="results">
+  <div class="res"><div class="div">Boys</div>${rline(br.cT,br.oT)}</div>
+  <div class="res"><div class="div">Girls</div>${rline(gr2.cT,gr2.oT)}</div>
+</div>
+<div class="halves">
+  ${half('boys')}
+  ${half('girls')}
+</div>
+<div class="foot">Generated by CHHS Mustang Bowling Tracker &nbsp;·&nbsp; ${new Date().toLocaleDateString()}</div>
+<script>window.onload=()=>window.print()<\/script>
+</body></html>`;
+
+  const w = window.open('', '_blank');
+  if(w){ w.document.write(html); w.document.close(); }
+  else toast('⚠ Allow pop-ups to open the print view');
+}
+
+// ═══════════════════════════════════════════════════════
+// BOWLER STATS
+// ═══════════════════════════════════════════════════════
+let sg='boys', ss={col:'avg',dir:-1};
+
+function rStats() {
+  const el=document.getElementById('v-stats');
+  el.innerHTML=`
+    <div class="ph"><h2>Bowler Season Stats</h2></div>
+    <div class="stabs">
+      <button class="stab ${sg==='boys'?'active':''}" onclick="sg='boys';rStats()">Boys</button>
+      <button class="stab ${sg==='girls'?'active':''}" onclick="sg='girls';rStats()">Girls</button>
+    </div>
+    <div class="card">${statsTable(sg)}</div>`;
+}
+
+function statsTable(gender) {
+  let data2=seasonStats(gender).filter(b=>b.games>0);
+  if(!data2.length) return `<div class="empty" style="padding:30px 20px"><div class="ei">🎳</div><h3>No data yet</h3></div>`;
+
+  data2.sort((a,b)=>{
+    const va=a[ss.col]??0, vb=b[ss.col]??0;
+    return ss.dir<0
+      ? (typeof vb==='string'?vb.localeCompare(va):vb-va)
+      : (typeof va==='string'?va.localeCompare(vb):va-vb);
+  });
+
+  const th=(col,lbl)=>{
+    const act=ss.col===col;
+    const dDir=col==='name'?1:-1;
+    return `<th class="${act?'srt':''}" onclick="ss={col:'${col}',dir:${act?-ss.dir:dDir}};rStats()">${lbl}${act?(ss.dir<0?' ↓':' ↑'):''}</th>`;
+  };
+
+  const rows=data2.map((b,i)=>`<tr>
+    <td class="rank-num">${i+1}</td>
+    <td><strong>${esc(b.name)}</strong></td>
+    <td>${b.matchCount}</td>
+    <td>${b.games}</td>
+    <td>${b.pins}</td>
+    <td><span class="avg-b">${fmt(b.avg)}</span></td>
+    <td>${b.highGame||'—'}</td>
+    <td>${b.highSer||'—'}</td>
+  </tr>`).join('');
+
+  return `<table class="st"><thead><tr>
+    <th>#</th>
+    ${th('name','Name')}${th('matchCount','Matches')}${th('games','Games')}
+    ${th('pins','Total Pins')}${th('avg','Average')}${th('highGame','High Game')}${th('highSer','High Series')}
+  </tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// ═══════════════════════════════════════════════════════
+// ROSTER
+// ═══════════════════════════════════════════════════════
+function rRoster() {
+  const el=document.getElementById('v-roster');
+  const tags=(gender)=>D.roster[gender].map(n=>
+    `<div class="rtag">${esc(n)}<button class="rdel" onclick="delRoster('${gender}','${n.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">×</button></div>`
+  ).join('')||'<span style="color:var(--muted);font-size:12px">No bowlers added yet</span>';
+
+  el.innerHTML=`
+    <div class="ph"><h2>Team Roster</h2></div>
+    <div class="two">
+      <div class="card">
+        <div class="ctitle">Boys</div>
+        <div class="frow">
+          <div class="fg" style="flex:1"><label>Add Bowler</label>
+            <input id="rb-in" type="text" placeholder="Full name" style="width:100%" onkeydown="if(event.key==='Enter')addRoster('boys')">
+          </div>
+          <button class="btn btn-r" onclick="addRoster('boys')">Add</button>
+        </div>
+        <div class="rtags">${tags('boys')}</div>
+      </div>
+      <div class="card">
+        <div class="ctitle">Girls</div>
+        <div class="frow">
+          <div class="fg" style="flex:1"><label>Add Bowler</label>
+            <input id="rg-in" type="text" placeholder="Full name" style="width:100%" onkeydown="if(event.key==='Enter')addRoster('girls')">
+          </div>
+          <button class="btn btn-r" onclick="addRoster('girls')">Add</button>
+        </div>
+        <div class="rtags">${tags('girls')}</div>
+      </div>
+    </div>
+    <p class="note" style="max-width:700px">
+      <strong>Tip:</strong> New names are automatically added to the roster when you save a match.
+      Removing a bowler from the roster does not delete their historical scores — it only removes them from the autocomplete list.
+    </p>`;
+}
+
+function addRoster(gender) {
+  const id=gender==='boys'?'rb-in':'rg-in';
+  const name=document.getElementById(id).value.trim();
+  if(!name) return;
+  if(D.roster[gender].includes(name)){ toast('Already on roster'); return; }
+  D.roster[gender].push(name);
+  save();
+  document.getElementById(id).value='';
+  rRoster();
+}
+
+function delRoster(gender, name) {
+  D.roster[gender]=D.roster[gender].filter(n=>n!==name);
+  save(); rRoster();
+}
+
+// ═══════════════════════════════════════════════════════
+// SETTINGS / DATA
+// ═══════════════════════════════════════════════════════
+function openSettings() {
+  document.getElementById('st-name').value=D.teamName;
+  document.getElementById('st-szn').value=D.season;
+  document.getElementById('st-sheeturl').value=SHEET_URL||'';
+  document.getElementById('sheetTestMsg').textContent='';
+  document.getElementById('stMod').classList.add('on');
+}
+
+function saveSettings() {
+  const name=document.getElementById('st-name').value.trim();
+  const szn=document.getElementById('st-szn').value.trim();
+  const url=document.getElementById('st-sheeturl').value.trim();
+  if(name) D.teamName=name;
+  if(szn)  D.season=szn;
+  const urlChanged = url !== SHEET_URL;
+  SHEET_URL = url;
+  localStorage.setItem(SKURL, SHEET_URL);
+  save();
+  document.getElementById('sznInfo').textContent=`Season ${D.season}`;
+  setSyncStatus(SHEET_URL?'ok':'');
+  closeMod('stMod');
+  toast('Settings saved');
+  render(cv);
+  if(urlChanged && SHEET_URL) sheetLoad();
+}
+
+async function testSheetConn() {
+  const url=document.getElementById('st-sheeturl').value.trim();
+  const msg=document.getElementById('sheetTestMsg');
+  if(!url){msg.style.color='#f87171';msg.textContent='Enter a URL first';return;}
+  msg.style.color='rgba(255,255,255,.5)';msg.textContent='Testing…';
+  try {
+    const r=await fetch(url+'?t='+Date.now());
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const data=await r.json();
+    if(data&&Array.isArray(data.matches)){
+      msg.style.color='#6ee7b7';msg.textContent='✓ Connected! ('+data.matches.length+' matches found)';
+    } else {
+      msg.style.color='#fca5a5';msg.textContent='⚠ Connected but unexpected response';
+    }
+  } catch(e) {
+    msg.style.color='#fca5a5';msg.textContent='✗ Failed: '+e.message;
+  }
+}
+
+function exportData() {
+  const json=JSON.stringify(D,null,2);
+  const a=Object.assign(document.createElement('a'),{
+    href:'data:application/json;charset=utf-8,'+encodeURIComponent(json),
+    download:`chhs-bowling-${D.season.replace(/\//g,'-')}.json`
+  });
+  a.click();
+  toast('Data exported');
+}
+
+function importData() {
+  const inp=Object.assign(document.createElement('input'),{type:'file',accept:'.json'});
+  inp.onchange=e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const r=new FileReader();
+    r.onload=ev=>{
+      try {
+        const imp=JSON.parse(ev.target.result);
+        if(!imp.matches||!imp.roster) throw new Error('bad format');
+        if(!confirm(`Import data from ${f.name}? This will replace all current data.`)) return;
+        D=imp; save();
+        document.getElementById('sznInfo').textContent=`Season ${D.season}`;
+        closeMod('stMod');
+        toast('✓ Data imported!');
+        rDash();
+      } catch(err){ toast('⚠ Invalid file format'); }
+    };
+    r.readAsText(f);
+  };
+  inp.click();
+}
+
+function resetAll() {
+  if(!confirm('Reset ALL season data? This cannot be undone.')) return;
+  D=dfl(); save();
+  document.getElementById('sznInfo').textContent=`Season ${D.season}`;
+  closeMod('stMod');
+  toast('Data reset');
+  rDash();
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+document.getElementById('sznInfo').textContent=`Season ${D.season}`;
+setSyncStatus(SHEET_URL?'ok':'');
+rDash();
+if(SHEET_URL) sheetLoad();
+</script>
+</body>
+</html>
