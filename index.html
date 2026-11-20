@@ -224,16 +224,6 @@ hr.dv{border:none;border-top:1px solid rgba(255,255,255,.1);margin:16px 0}
         <div class="fg" style="flex:1"><label>Season</label><input id="st-szn" type="text" placeholder="2026-27" style="width:100%"></div>
       </div>
       <hr class="dv">
-      <div class="fg" style="margin-bottom:8px">
-        <label>Google Sheets Web App URL</label>
-        <input id="st-sheeturl" type="url" placeholder="https://script.google.com/macros/s/…/exec" style="width:100%;font-size:11.5px">
-        <span style="font-size:11px;color:var(--muted);display:block;margin-top:3px">Paste your deployed Apps Script URL to sync data with Google Sheets. Leave blank to use local storage only.</span>
-      </div>
-      <div class="flex" style="margin-bottom:12px">
-        <button class="btn btn-g btn-sm" onclick="testSheetConn()">🔗 Test Connection</button>
-        <span id="sheetTestMsg" style="font-size:12px;color:var(--muted);margin-left:4px"></span>
-      </div>
-      <hr class="dv">
       <div class="flex" style="margin-bottom:10px">
         <button class="btn btn-r" onclick="saveSettings()">Save Settings</button>
         <button class="btn btn-g" onclick="closeMod('stMod')">Cancel</button>
@@ -259,7 +249,9 @@ function dfl() {
   return { teamName:'Center Hill Mustangs', season:'2026-27', roster:{boys:[],girls:[]}, matches:[] };
 }
 let D = (() => { try { return JSON.parse(localStorage.getItem(SK)) || dfl(); } catch(e) { return dfl(); } })();
-let SHEET_URL = localStorage.getItem(SKURL) || '';
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyOrSKFLQc1fobu-xt2qn_YvK2jwyPjgeCyHBAa-Li1z6ee9MwHMOrQ-99cLDXsWf3X/exec';
+// Auto-migrate old team name
+if(D.teamName==='CHHS Mustangs'){D.teamName='Center Hill Mustangs';localStorage.setItem('chhs_bowling_v1',JSON.stringify(D));}
 
 const save = () => {
   localStorage.setItem(SK, JSON.stringify(D));
@@ -288,6 +280,8 @@ async function sheetLoad() {
     const remote=await r.json();
     if(remote&&Array.isArray(remote.matches)){
       D=remote;
+      // Apply name migration even if sheet still has old name
+      if(D.teamName==='CHHS Mustangs') D.teamName='Center Hill Mustangs';
       localStorage.setItem(SK,JSON.stringify(D));
       setSyncStatus('ok');
       document.getElementById('sznInfo').textContent=`Season ${D.season}`;
@@ -1270,32 +1264,25 @@ function delRoster(gender, name) {
 function openSettings() {
   document.getElementById('st-name').value=D.teamName;
   document.getElementById('st-szn').value=D.season;
-  document.getElementById('st-sheeturl').value=SHEET_URL||'';
-  document.getElementById('sheetTestMsg').textContent='';
   document.getElementById('stMod').classList.add('on');
 }
 
 function saveSettings() {
   const name=document.getElementById('st-name').value.trim();
   const szn=document.getElementById('st-szn').value.trim();
-  const url=document.getElementById('st-sheeturl').value.trim();
   if(name) D.teamName=name;
   if(szn)  D.season=szn;
-  const urlChanged = url !== SHEET_URL;
-  SHEET_URL = url;
-  localStorage.setItem(SKURL, SHEET_URL);
   save();
   document.getElementById('sznInfo').textContent=`Season ${D.season}`;
-  setSyncStatus(SHEET_URL?'ok':'');
+  setSyncStatus('ok');
   closeMod('stMod');
   toast('Settings saved');
   render(cv);
-  if(urlChanged && SHEET_URL) sheetLoad();
 }
 
-async function testSheetConn() {
-  const url=document.getElementById('st-sheeturl').value.trim();
-  const msg=document.getElementById('sheetTestMsg');
+async function testSheetConn_unused() {
+  const url='';
+  const msg={style:{},textContent:''};
   if(!url){msg.style.color='#f87171';msg.textContent='Enter a URL first';return;}
   msg.style.color='rgba(255,255,255,.5)';msg.textContent='Testing…';
   try {
@@ -1357,9 +1344,9 @@ function resetAll() {
 // INIT
 // ═══════════════════════════════════════════════════════
 document.getElementById('sznInfo').textContent=`Season ${D.season}`;
-setSyncStatus(SHEET_URL?'ok':'');
+setSyncStatus('ok');
 rDash();
-if(SHEET_URL) sheetLoad();
+sheetLoad();
 </script>
 </body>
 </html>
