@@ -1543,7 +1543,7 @@ function statsTable(gender) {
 
   const rows=data2.map((b,i)=>`<tr>
     <td class="rank-num">${i+1}</td>
-    <td><strong><span class="bowler-link" onclick="openBowlerProfile(${JSON.stringify(esc(b.name))},'${gender}')">${esc(b.name)}</span></strong></td>
+    <td><strong><span class="bowler-link" onclick="openBowlerProfile(${JSON.stringify(b.name)},'${gender}')">${esc(b.name)}</span></strong></td>
     <td>${b.matchCount}</td>
     <td>${b.games}</td>
     <td>${b.pins}</td>
