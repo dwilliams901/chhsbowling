@@ -121,6 +121,11 @@ main{max-width:1300px;margin:0 auto;padding:22px 20px}
 .st tr:hover td{background:rgba(255,255,255,.04)}
 .avg-b{font-size:16px;font-weight:800;color:#fff}
 .rank-num{color:var(--muted);font-size:12px;font-weight:600}
+.bowler-link{cursor:pointer;border-bottom:1px dashed rgba(200,16,46,.5);transition:color .15s,border-color .15s}
+.bowler-link:hover{color:var(--red);border-color:var(--red)}
+.res-pill{display:inline-block}
+.res-pill.gbg{background:var(--gbg);color:var(--gtxt)}
+.res-pill.rbg{background:var(--rbg);color:var(--rtxt)}
 
 /* ROSTER */
 .rtags{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
@@ -197,6 +202,17 @@ hr.dv{border:none;border-top:1px solid rgba(255,255,255,.1);margin:16px 0}
   <div id="v-stats" class="view"></div>
   <div id="v-roster" class="view"></div>
 </main>
+
+<!-- Bowler Profile Modal -->
+<div class="mbg" id="bpMod">
+  <div class="modal" style="max-width:860px">
+    <div class="mhdr">
+      <h3 id="bpModTitle">Bowler Profile</h3>
+      <button class="mclose" onclick="closeMod('bpMod')">×</button>
+    </div>
+    <div id="bpModBody"></div>
+  </div>
+</div>
 
 <!-- Scorecard Modal -->
 <div class="mbg" id="scMod">
@@ -1389,6 +1405,125 @@ function rStats() {
     <div class="card">${statsTable(sg)}</div>`;
 }
 
+function openBowlerProfile(name, gender) {
+  // Per-match game log
+  const matchRows = D.matches.map((m, idx) => {
+    const b = m[gender].chhs.find(x => x.name === name);
+    if (!b) return null;
+    const g1 = b.g1!==null&&b.g1!==''?+b.g1:null;
+    const g2 = b.g2!==null&&b.g2!==''?+b.g2:null;
+    const g3 = b.g3!==null&&b.g3!==''?+b.g3:null;
+    const bowled = [g1,g2,g3].filter(x=>x!==null);
+    if (!bowled.length) return null;
+    const ser = bowled.reduce((a,v)=>a+v,0);
+    const avg = ser / bowled.length;
+    const r = matchResult(m);
+    const gr = r[gender];
+    const won = gr.cT > gr.oT, tied = gr.cT === gr.oT;
+    const resultCls = won ? 'gbg' : tied ? '' : 'rbg';
+    const resultLbl = won ? 'W' : tied ? 'T' : 'L';
+    const dateStr = m.date ? (()=>{ const d=new Date(m.date); return isNaN(d)?m.date:`${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`; })() : '';
+    const cell = v => v!==null ? `<td class="tc">${v}</td>` : `<td class="tc" style="color:var(--muted)">—</td>`;
+    // Running avg through this match
+    const runSt = bStats(name, gender, idx);
+    return { idx, row: `<tr>
+      <td class="tc" style="color:var(--muted);font-size:12px">#${m.matchNum}</td>
+      <td>${esc(m.opponent||'')}<span style="font-size:10px;color:var(--muted);margin-left:5px">${dateStr}</span></td>
+      ${cell(g1)}${cell(g2)}${cell(g3)}
+      <td class="tc"><strong>${ser}</strong></td>
+      <td class="tc" style="font-size:12px;color:var(--muted)">${fmt(runSt.avg)}</td>
+      <td class="tc"><span class="res-pill ${resultCls}" style="font-size:11px;padding:2px 7px;border-radius:4px;font-weight:700">${resultLbl}</span></td>
+    </tr>` };
+  }).filter(Boolean);
+
+  const st = bStats(name, gender, D.matches.length - 1);
+  const matchCount = D.matches.filter(m => {
+    const b = m[gender].chhs.find(x=>x.name===name);
+    return b && (b.g1!==null&&b.g1!==''||b.g2!==null&&b.g2!==''||b.g3!==null&&b.g3!=='');
+  }).length;
+
+  // Best game and series match references
+  let bestGameMatch='', bestSerMatch='';
+  D.matches.forEach(m => {
+    const b = m[gender].chhs.find(x=>x.name===name);
+    if (!b) return;
+    const vals = [b.g1,b.g2,b.g3].map(v=>v!==null&&v!==''?+v:null).filter(x=>x!==null);
+    if (!vals.length) return;
+    const mx = Math.max(...vals);
+    if (mx === st.highGame) bestGameMatch = `vs ${m.opponent}`;
+    const ser = vals.reduce((a,v)=>a+v,0);
+    if (vals.length===3 && ser === st.highSer) bestSerMatch = `vs ${m.opponent}`;
+  });
+
+  // Simple sparkline-style average trend (SVG bar chart)
+  const trendPts = D.matches.map((m,idx)=>{
+    const runSt = bStats(name, gender, idx);
+    return runSt.games ? runSt.avg : null;
+  }).filter(x=>x!==null);
+
+  let trendSvg = '';
+  if (trendPts.length >= 2) {
+    const W=460, H=56, pad=4;
+    const minV=Math.max(0,Math.min(...trendPts)-10);
+    const maxV=Math.max(...trendPts)+5;
+    const sx = i => pad + i*(W-pad*2)/(trendPts.length-1);
+    const sy = v => H - pad - (v-minV)/(maxV-minV)*(H-pad*2);
+    const pts = trendPts.map((v,i)=>`${sx(i)},${sy(v)}`).join(' ');
+    const area = `M${sx(0)},${H} L${pts.split(' ').map(p=>p).join(' L')} L${sx(trendPts.length-1)},${H} Z`;
+    trendSvg = `<div style="margin:14px 0 4px">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:600;letter-spacing:.05em">SEASON AVERAGE TREND</div>
+      <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible">
+        <defs>
+          <linearGradient id="tg${name.replace(/\W/g,'')}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#c8102e" stop-opacity=".35"/>
+            <stop offset="100%" stop-color="#c8102e" stop-opacity=".03"/>
+          </linearGradient>
+        </defs>
+        <path d="${area}" fill="url(#tg${name.replace(/\W/g,'')})" />
+        <polyline points="${pts}" fill="none" stroke="#c8102e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+        ${trendPts.map((v,i)=>`<circle cx="${sx(i)}" cy="${sy(v)}" r="3" fill="#c8102e"/>`).join('')}
+        ${trendPts.map((v,i)=>`<text x="${sx(i)}" y="${sy(v)-6}" text-anchor="middle" font-size="9" fill="rgba(255,255,255,.7)">${fmt(v)}</text>`).join('')}
+      </svg>
+    </div>`;
+  }
+
+  document.getElementById('bpModTitle').textContent = `${name} · ${gender==='boys'?'Boys':'Girls'}`;
+  document.getElementById('bpModBody').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px">
+      ${[
+        ['Average',   `<span style="font-size:28px;font-weight:900;color:#fff">${fmt(st.avg)}</span>`],
+        ['Total Pins',st.pins],
+        ['Games',     st.games],
+        ['Matches',   matchCount],
+        ['High Game', st.highGame ? `<span style="color:#f59e0b;font-weight:800">${st.highGame}</span>${bestGameMatch?`<div style="font-size:10px;color:var(--muted);margin-top:2px">${esc(bestGameMatch)}</div>`:''}` : '—'],
+        ['High Series',st.highSer ? `<span style="color:#f59e0b;font-weight:800">${st.highSer}</span>${bestSerMatch?`<div style="font-size:10px;color:var(--muted);margin-top:2px">${esc(bestSerMatch)}</div>`:''}` : '—'],
+      ].map(([label,val])=>`
+        <div style="background:rgba(255,255,255,.06);border:1px solid var(--bdr);border-radius:8px;padding:12px 14px;text-align:center">
+          <div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.07em;margin-bottom:4px">${label.toUpperCase()}</div>
+          <div style="font-size:20px;font-weight:800">${val}</div>
+        </div>`).join('')}
+    </div>
+
+    ${trendSvg}
+
+    ${matchRows.length ? `
+    <div style="margin-top:16px">
+      <div style="font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.05em;margin-bottom:8px">MATCH HISTORY</div>
+      <div style="overflow-x:auto">
+        <table class="st" style="min-width:500px">
+          <thead><tr>
+            <th class="tc">#</th><th>Opponent</th>
+            <th class="tc">G1</th><th class="tc">G2</th><th class="tc">G3</th>
+            <th class="tc">Series</th><th class="tc">Run. Avg</th><th class="tc">Result</th>
+          </tr></thead>
+          <tbody>${matchRows.map(r=>r.row).join('')}</tbody>
+        </table>
+      </div>
+    </div>` : '<div style="color:var(--muted);padding:16px 0">No match data yet.</div>'}
+  `;
+  document.getElementById('bpMod').classList.add('on');
+}
+
 function statsTable(gender) {
   let data2=seasonStats(gender).filter(b=>b.games>0);
   if(!data2.length) return `<div class="empty" style="padding:30px 20px"><div class="ei">🎳</div><h3>No data yet</h3></div>`;
@@ -1408,7 +1543,7 @@ function statsTable(gender) {
 
   const rows=data2.map((b,i)=>`<tr>
     <td class="rank-num">${i+1}</td>
-    <td><strong>${esc(b.name)}</strong></td>
+    <td><strong><span class="bowler-link" onclick="openBowlerProfile(${JSON.stringify(esc(b.name))},'${gender}')">${esc(b.name)}</span></strong></td>
     <td>${b.matchCount}</td>
     <td>${b.games}</td>
     <td>${b.pins}</td>
