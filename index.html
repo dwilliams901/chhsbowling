@@ -209,6 +209,17 @@ hr.dv{border:none;border-top:1px solid rgba(255,255,255,.1);margin:16px 0}
   </div>
 </div>
 
+<!-- Edit Match Modal -->
+<div class="mbg" id="edMod">
+  <div class="modal" style="max-width:1060px">
+    <div class="mhdr">
+      <h3 id="edModTitle">Edit Match</h3>
+      <button class="mclose" onclick="closeMod('edMod')">×</button>
+    </div>
+    <div id="edModBody"></div>
+  </div>
+</div>
+
 <!-- Settings Modal -->
 <div class="mbg" id="stMod">
   <div class="modal" style="max-width:450px">
@@ -865,6 +876,7 @@ function rCards() {
         ${badge(r.boys,'Boys')} ${badge(r.girls,'Girls')}
         <button class="btn btn-g btn-sm" onclick="event.stopPropagation();shareMatch(${idx})" title="Share card">📸</button>
         <button class="btn btn-g btn-sm" onclick="event.stopPropagation();printMatch(${idx})" title="Print scorecard">🖨</button>
+        <button class="btn btn-g btn-sm" onclick="event.stopPropagation();editMatch(${idx})" title="Edit scores">✏</button>
         <button class="btn btn-x btn-sm" onclick="event.stopPropagation();delMatch(${idx})" title="Delete match">✕</button>
       </div>
     </div>`;
@@ -882,6 +894,7 @@ function openSC(idx) {
       ${m.date?`<span style="font-size:12px;color:var(--muted)">${m.date}</span>`:''}
       <button class="btn btn-g btn-sm" style="margin-left:auto" onclick="shareMatch(${idx})">📸 Share Card</button>
       <button class="btn btn-g btn-sm" onclick="printMatch(${idx})">🖨 Print</button>
+      <button class="btn btn-g btn-sm" onclick="closeMod('scMod');editMatch(${idx})">✏ Edit Scores</button>
     </div>
     ${scorecardHTML(idx)}`;
   document.getElementById('scMod').classList.add('on');
@@ -891,6 +904,214 @@ function delMatch(idx) {
   if(!confirm('Delete this match? This cannot be undone.')) return;
   D.matches.splice(idx,1);
   save(); toast('Match deleted'); rCards();
+}
+
+function editMatch(idx) {
+  const m = D.matches[idx];
+  const bList = D.roster.boys.map(n=>`<option value="${esc(n)}">`).join('');
+  const gList = D.roster.girls.map(n=>`<option value="${esc(n)}">`).join('');
+
+  // Build a pre-filled CHHS row from saved bowler data
+  const cRow = (gender, listId, b) => {
+    const g1 = b&&b.g1!=null&&b.g1!==''?b.g1:'';
+    const g2 = b&&b.g2!=null&&b.g2!==''?b.g2:'';
+    const g3 = b&&b.g3!=null&&b.g3!==''?b.g3:'';
+    const tot = (+g1||0)+(+g2||0)+(+g3||0);
+    return `<tr>
+      <td style="display:flex;align-items:center;gap:5px">
+        <div style="flex:1;min-width:0">
+          <input type="text" placeholder="Bowler name" list="${listId}" value="${esc(b?b.name:'')}" style="width:100%" oninput="updateAvgHint(this)">
+          <div class="avg-hint" style="font-size:10px;color:var(--muted);margin-top:1px"></div>
+        </div>
+        <button type="button" title="Remove row" onclick="this.closest('tr').remove();edTotals('${gender}',false)"
+          style="background:none;border:none;cursor:pointer;color:#ccc;font-size:16px;line-height:1;padding:0 2px;flex-shrink:0"
+          onmouseover="this.style.color='#c8102e'" onmouseout="this.style.color='#ccc'">×</button>
+      </td>
+      <td><input type="number" min="0" max="300" placeholder="—" value="${g1}" oninput="edRecalc('${gender}',this)"></td>
+      <td><input type="number" min="0" max="300" placeholder="—" value="${g2}" oninput="edRecalc('${gender}',this)"></td>
+      <td><input type="number" min="0" max="300" placeholder="—" value="${g3}" oninput="edRecalc('${gender}',this)"></td>
+      <td class="tc">${tot||'—'}</td>
+    </tr>`;
+  };
+
+  // Build a pre-filled opponent row
+  const oRow = (gender, o, i) => {
+    const g1 = o&&o.g1!=null&&o.g1!==''?o.g1:'';
+    const g2 = o&&o.g2!=null&&o.g2!==''?o.g2:'';
+    const g3 = o&&o.g3!=null&&o.g3!==''?o.g3:'';
+    const tot = (+g1||0)+(+g2||0)+(+g3||0);
+    return `<tr>
+      <td style="color:var(--muted);font-weight:600;font-style:italic">#${i+1}</td>
+      <td><input type="number" min="0" max="300" placeholder="—" value="${g1}" oninput="edOrecalc('${gender}',this)"></td>
+      <td><input type="number" min="0" max="300" placeholder="—" value="${g2}" oninput="edOrecalc('${gender}',this)"></td>
+      <td><input type="number" min="0" max="300" placeholder="—" value="${g3}" oninput="edOrecalc('${gender}',this)"></td>
+      <td class="tc">${tot||'—'}</td>
+    </tr>`;
+  };
+
+  const tfoot = (pfx) => `<tfoot><tr>
+    <td style="font-style:italic">Team Total</td>
+    <td class="tc" id="ed-${pfx}-g1">—</td>
+    <td class="tc" id="ed-${pfx}-g2">—</td>
+    <td class="tc" id="ed-${pfx}-g3">—</td>
+    <td class="tc" id="ed-${pfx}-tot">—</td>
+  </tr></tfoot>`;
+
+  const boysC  = (m.boys.chhs||[]);
+  const boysO  = (m.boys.opp||[]);
+  const girlsC = (m.girls.chhs||[]);
+  const girlsO = (m.girls.opp||[]);
+
+  // Pad opp rows to at least 6
+  const padOpp = (arr) => { const a=[...arr]; while(a.length<6) a.push(null); return a; };
+
+  document.getElementById('edModTitle').textContent = `Edit Match #${m.matchNum} · vs ${esc(m.opponent)}`;
+  document.getElementById('edModBody').innerHTML = `
+    <datalist id="edl-boys">${bList}</datalist>
+    <datalist id="edl-girls">${gList}</datalist>
+
+    <div class="fcard">
+      <h3>Match Info</h3>
+      <div class="frow">
+        <div class="fg"><label>Match #</label><input id="ed-num" type="number" value="${m.matchNum}" min="1" style="width:85px"></div>
+        <div class="fg"><label>Date</label><input id="ed-date" type="date" value="${(m.date||'').slice(0,10)}" style="width:160px"></div>
+        <div class="fg" style="flex:1"><label>Opponent Name</label><input id="ed-opp" type="text" value="${esc(m.opponent)}" style="width:100%;max-width:280px"></div>
+      </div>
+    </div>
+
+    <div class="two">
+      <div class="fcard">
+        <h3>🎳 Boys — ${esc(D.teamName)}</h3>
+        <table class="et">
+          <thead><tr><th>Name</th><th>Game 1</th><th>Game 2</th><th>Game 3</th><th>Total</th></tr></thead>
+          <tbody id="ed-bc">${boysC.map(b=>cRow('boys','edl-boys',b)).join('')}</tbody>
+          ${tfoot('b')}
+        </table>
+        <button class="btn btn-g btn-sm" style="margin-top:8px" onclick="edAddRow('boys')">＋ Add Bowler</button>
+      </div>
+      <div class="fcard">
+        <h3>🎳 Boys — Opponent</h3>
+        <table class="et">
+          <thead><tr><th>#</th><th>Game 1</th><th>Game 2</th><th>Game 3</th><th>Total</th></tr></thead>
+          <tbody id="ed-bo">${padOpp(boysO).map((o,i)=>oRow('boys',o,i)).join('')}</tbody>
+          ${tfoot('bo')}
+        </table>
+      </div>
+    </div>
+
+    <div class="two">
+      <div class="fcard">
+        <h3>🎳 Girls — ${esc(D.teamName)}</h3>
+        <table class="et">
+          <thead><tr><th>Name</th><th>Game 1</th><th>Game 2</th><th>Game 3</th><th>Total</th></tr></thead>
+          <tbody id="ed-gc">${girlsC.map(b=>cRow('girls','edl-girls',b)).join('')}</tbody>
+          ${tfoot('g')}
+        </table>
+        <button class="btn btn-g btn-sm" style="margin-top:8px" onclick="edAddRow('girls')">＋ Add Bowler</button>
+      </div>
+      <div class="fcard">
+        <h3>🎳 Girls — Opponent</h3>
+        <table class="et">
+          <thead><tr><th>#</th><th>Game 1</th><th>Game 2</th><th>Game 3</th><th>Total</th></tr></thead>
+          <tbody id="ed-go">${padOpp(girlsO).map((o,i)=>oRow('girls',o,i)).join('')}</tbody>
+          ${tfoot('go')}
+        </table>
+      </div>
+    </div>
+
+    <div class="flex">
+      <button class="btn btn-r" onclick="updateMatch(${idx})">💾 Save Changes</button>
+      <button class="btn btn-g" onclick="closeMod('edMod')">Cancel</button>
+    </div>`;
+
+  document.getElementById('edMod').classList.add('on');
+
+  // Compute initial totals
+  ['boys','girls'].forEach(g=>{ edTotals(g,false); edTotals(g,true); });
+}
+
+function edRecalc(gender, inp) {
+  const tr=inp.closest('tr');
+  const nums=[...tr.querySelectorAll('input[type=number]')];
+  tr.querySelector('.tc').textContent=nums.reduce((s,n)=>s+(+n.value||0),0)||'—';
+  edTotals(gender,false);
+}
+
+function edOrecalc(gender, inp) {
+  const tr=inp.closest('tr');
+  const nums=[...tr.querySelectorAll('input[type=number]')];
+  tr.querySelector('.tc').textContent=nums.reduce((s,n)=>s+(+n.value||0),0)||'—';
+  edTotals(gender,true);
+}
+
+function edTotals(gender, isOpp) {
+  const tbId = isOpp ? (gender==='boys'?'ed-bo':'ed-go') : (gender==='boys'?'ed-bc':'ed-gc');
+  const pfx  = isOpp ? (gender==='boys'?'bo':'go') : (gender==='boys'?'b':'g');
+  const rows = [...(document.getElementById(tbId)||{rows:[]}).rows];
+  const g=[0,0,0];
+  rows.forEach(tr=>{
+    const nums=tr.querySelectorAll('input[type=number]');
+    if(nums.length>=3){ g[0]+=+nums[0].value||0; g[1]+=+nums[1].value||0; g[2]+=+nums[2].value||0; }
+  });
+  ['g1','g2','g3'].forEach((k,i)=>{ const el=document.getElementById(`ed-${pfx}-${k}`); if(el) el.textContent=g[i]||'—'; });
+  const tel=document.getElementById(`ed-${pfx}-tot`); if(tel) tel.textContent=(g[0]+g[1]+g[2])||'—';
+}
+
+function edAddRow(gender) {
+  const tbId  = gender==='boys' ? 'ed-bc' : 'ed-gc';
+  const listId= gender==='boys' ? 'edl-boys' : 'edl-girls';
+  const tbody = document.getElementById(tbId);
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="display:flex;align-items:center;gap:5px">
+      <div style="flex:1;min-width:0">
+        <input type="text" placeholder="Bowler name" list="${listId}" style="width:100%" oninput="updateAvgHint(this)">
+        <div class="avg-hint" style="font-size:10px;color:var(--muted);margin-top:1px"></div>
+      </div>
+      <button type="button" title="Remove row" onclick="this.closest('tr').remove();edTotals('${gender}',false)"
+        style="background:none;border:none;cursor:pointer;color:#ccc;font-size:16px;line-height:1;padding:0 2px;flex-shrink:0"
+        onmouseover="this.style.color='#c8102e'" onmouseout="this.style.color='#ccc'">×</button>
+    </td>
+    <td><input type="number" min="0" max="300" placeholder="—" oninput="edRecalc('${gender}',this)"></td>
+    <td><input type="number" min="0" max="300" placeholder="—" oninput="edRecalc('${gender}',this)"></td>
+    <td><input type="number" min="0" max="300" placeholder="—" oninput="edRecalc('${gender}',this)"></td>
+    <td class="tc">—</td>`;
+  tbody.appendChild(tr);
+  tr.querySelector('input[type=text]').focus();
+}
+
+function edReadRows(tbId, isOpp) {
+  return [...(document.getElementById(tbId)||{rows:[]}).rows].map(tr=>{
+    const nums=tr.querySelectorAll('input[type=number]');
+    if(isOpp) return { g1:nums[0].value||null, g2:nums[1].value||null, g3:nums[2].value||null };
+    const ni=tr.querySelector('input[type=text]');
+    return { name:ni?ni.value.trim():'', g1:nums[0].value||null, g2:nums[1].value||null, g3:nums[2].value||null };
+  });
+}
+
+function updateMatch(idx) {
+  const num  = +document.getElementById('ed-num').value;
+  const date = document.getElementById('ed-date').value;
+  const opp  = document.getElementById('ed-opp').value.trim();
+  if(!opp){ toast('⚠ Enter opponent name'); return; }
+
+  const boysC  = edReadRows('ed-bc',false).filter(b=>b.name||b.g1||b.g2||b.g3);
+  const boysO  = edReadRows('ed-bo',true);
+  const girlsC = edReadRows('ed-gc',false).filter(b=>b.name||b.g1||b.g2||b.g3);
+  const girlsO = edReadRows('ed-go',true);
+
+  // Auto-add new names to roster
+  boysC.forEach(b=>{ if(b.name&&!D.roster.boys.includes(b.name)) D.roster.boys.push(b.name); });
+  girlsC.forEach(b=>{ if(b.name&&!D.roster.girls.includes(b.name)) D.roster.girls.push(b.name); });
+
+  D.matches[idx] = { ...D.matches[idx], matchNum:num, date, opponent:opp,
+    boys:{chhs:boysC, opp:boysO}, girls:{chhs:girlsC, opp:girlsO} };
+  D.matches.sort((a,b)=>a.matchNum-b.matchNum);
+  save();
+
+  closeMod('edMod');
+  toast(`✓ Match #${num} updated!`);
+  rCards(); rDash();
 }
 
 // ═══════════════════════════════════════════════════════
